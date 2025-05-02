@@ -7,17 +7,27 @@ import math
 
 class Node():
     def __init__(self, ucb1, parent, visits, round, play, community_cards, self_cards, unusedCards):
+        # for my info; can delete later
         self.round = round
         self.play = play
+
+        # track visits
         self.visits = visits
+        # track ucb1
         self.ucb1 = ucb1
+        # track parent for backpropagation
         self.parent = parent
+
+        # track cards
         self.community_cards = community_cards
         self.self_cards = self_cards
         self.unusedCards = unusedCards
+
         # use left and right to create a binary tree because player can either only fold or stay
         self.left = None
         self.right = None
+
+        # track wins and losses
         self.wins = 0
         self.losses = 0
 
@@ -65,7 +75,7 @@ def SelectAndExpand(root):
         else:
             return SelectAndExpand(root.right)
     
-def simulateFrom(node, ls_cards, community_cards):
+def simulateFrom(node):
     curr_round = node.round
 
     # 5 rounds because that's how many times we play in poker
@@ -82,7 +92,7 @@ def simulateFrom(node, ls_cards, community_cards):
     return 1
 
 # gets list of cards ls_cards
-def MonteCarloTreeSearch(ls_cards, community_cards, root):
+def MonteCarloTreeSearch(root):
 
     # continue only for 10 seconds maximum
     #start_time = time.time()
@@ -94,7 +104,7 @@ def MonteCarloTreeSearch(ls_cards, community_cards, root):
     print(node.round, node.play)
 
     # simulation
-    res = simulateFrom(node, ls_cards, community_cards)
+    res = simulateFrom(node)
 
     print(res)
 
@@ -117,11 +127,11 @@ def MonteCarloTreeSearch(ls_cards, community_cards, root):
 
 # gets list of cards ls_cards and community_cards if any
 # returns true or false
-def decideFoldOrStay(ls_cards, community_cards, root):
+def decideFoldOrStay(root):
     # compute Monte Carlo
     # returns True if Stay, False for Fold
     # if the bot has win probability of 50% or over, then stay else fold
-    return True if MonteCarloTreeSearch(ls_cards, community_cards, root) >= 50 else False
+    return True if MonteCarloTreeSearch(root) >= 50 else False
 
 # gets an integer num_cards_to_lay and set of unusedCards
 # returns the cards in list format
@@ -151,7 +161,7 @@ def poker():
     root = Node(0, None, 1, 0, None, [], botCards, unusedCards)
 
     # decide whether players fold or stay
-    if not decideFoldOrStay(botCards, None, root):
+    if not decideFoldOrStay(root):
         print("End of gameplay")
         return 0
 
