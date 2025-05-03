@@ -214,13 +214,14 @@ def poker():
     
     # first round: pre-flop
     botCards, unusedCards = layCards(2, unusedCards)
+    oppCards, _ = layCards(2, unusedCards)
 
     # define root node
     root = Node(None, 1, 0, [], botCards, unusedCards)
 
     # decide whether players fold or stay
     if not decideFoldOrStay(root):
-        print("End of gameplay at Pre-Flop")
+        print("Bot folded. End of gameplay at Pre-Flop")
         return 0
 
     # second round: flop
@@ -230,7 +231,7 @@ def poker():
     root = Node(0, None, 1, community_cards, botCards, unusedCards)
 
     if not decideFoldOrStay(root):
-        print("End of gameplay at Flop")
+        print("Bot folded. End of gameplay at Flop")
         return 0
 
     # third round: turn
@@ -242,7 +243,7 @@ def poker():
     root = Node(0, None, 1, community_cards, botCards, unusedCards)
 
     if not decideFoldOrStay(root):
-        print("End of gameplay at Turn")
+        print("Bot folded. End of gameplay at Turn")
         return 0
 
     # fourth and last round: river
@@ -254,14 +255,14 @@ def poker():
     root = Node(0, None, 1, community_cards, botCards, unusedCards)
 
     if not decideFoldOrStay(root):
-        print("End of gameplay at River")
+        print("Bot folded. End of gameplay at River")
         return 0
 
     # decide the winner (since no one has folded at this point!)
+    print("Decide winner!")
     
     
     
-    
-    print(botCards, community_cards, unusedCards)
+    print(botCards, community_cards, oppCards)
 
 poker()
