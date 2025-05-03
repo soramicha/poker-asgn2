@@ -29,13 +29,12 @@ class Node():
         self.losses = 0
 
 def SelectAndExpand(root):
-    print("Selecting...", root.round)
     # when we encounter unexpanded node
     if root.unusedCards != []:
         # create a child
         child = Node(root, 1, root.round + 1, [i for i in root.community_cards], root.self_cards, [i for i in root.unusedCards])
         # get a random community_card; update root.unusedCards
-        community_card, root.unusedCards = layCards(1, root.unusedCards)
+        community_card, child.unusedCards = layCards(1, child.unusedCards)
         # child will add a new community card
         child.community_cards += community_card
         # root will add child
@@ -44,28 +43,117 @@ def SelectAndExpand(root):
         return child
     # otherwise keep traveling
     else:
-        print("USED ALL COMBOS")
         for child in root.children:
             return SelectAndExpand(child)
     
 def simulateFrom(node):
-    print("Simulation starting!")
     community_cards = [i for i in node.community_cards]
     unusedCards = [i for i in node.unusedCards]
-    print("Ok")
+
     # randomly simulate opponent cards
     opponentCards, unusedCards = layCards(2, unusedCards)
-    print("Laui")
+
     # 5 rounds because that's how many times we play in poker
     while len(community_cards) < 5:
+        # get a community card
         card, unusedCards = layCards(1, unusedCards)
-        print("lol", len(community_cards), unusedCards)
-        # add to community_cards
+
+        # add that card to the rest of community_cards
         community_cards += card
 
     # decide win or not
-    print(community_cards, node.self_cards, opponentCards)
     return WinOrLose(community_cards, node.self_cards, opponentCards)
+
+def royalFlush(cards):
+    # royal flush - 10, J, Q, K, A of the SAME suit
+    s1 = {10, 11, 12, 13, 1}
+    s2 = {14, 23, 24, 25, 26}
+    s3 = {27, 36, 37, 38, 39}
+    s4 = {40, 49, 50, 51, 52}
+    if s1.issubset(cards) or s2.issubset(cards) or s3.issubset(cards) or s4.issubset(cards):
+        return True
+    return False
+
+def straightFlush(cards):
+    maximum, streak = 0, 0
+
+    # hearts
+    for i in range(1, 14):
+        if i in cards:
+            streak += 1
+            maximum = max(maximum, streak)
+        else:
+            streak = 0
+    
+    if maximum == 5:
+        return True
+    
+    # spades
+    maximum, streak = 0, 0
+    for i in range(14, 27):
+        if i in cards:
+            streak += 1
+            maximum = max(maximum, streak)
+        else:
+            streak = 0
+
+    if maximum == 5:
+        return True
+
+    # clover
+    maximum, streak = 0, 0
+    for i in range(27, 40):
+        if i in cards:
+            streak += 1
+            maximum = max(maximum, streak)
+        else:
+            streak = 0
+
+    if maximum == 5:
+        return True
+    
+    # diamond
+    maximum, streak = 0, 0
+    for i in range(40, 53):
+        if i in cards:
+            streak += 1
+            maximum = max(maximum, streak)
+        else:
+            streak = 0
+
+    if maximum == 5:
+        return True
+    
+    # return False when none apply
+    return False
+
+def fourOfAKind(cards):
+    for i in range(1, 14):
+        # check all multiples
+        if i in cards and i + 13 in cards and i + 26 in cards and i + 39 in cards:
+            return True
+    return False
+
+def fullHouse(cards):
+    three = 0
+    for i in range(1, 14):
+        # check all multiples
+        if i in cards:
+            three += 1
+        if i + 13 in cards:
+            three += 1
+        if i + 26 in cards:
+            three += 1
+        if i + 39 in cards:
+            three += 1
+
+        if three == 3:
+            break
+
+    if three != 3:
+        return False
+
+    # TODO
 
 # if there's a tie, give point to bot automatically
 def WinOrLose(community_cards, cards, opponentCards):
@@ -73,53 +161,38 @@ def WinOrLose(community_cards, cards, opponentCards):
     botCanUse = set(community_cards + cards)
     oppCanUse = set(community_cards + opponentCards)
 
-    # royal flush - 10, J, Q, K, A of the SAME suit
-    s1 = {10, 11, 12, 13, 1}
-    s2 = {14, 23, 24, 25, 26}
-    s3 = {27, 36, 37, 38, 39}
-    s4 = {40, 49, 50, 51, 52}
-    if s1.issubset(botCanUse) or s2.issubset(botCanUse) or s3.issubset(botCanUse) or s4.issubset(botCanUse):
+    # check for royal flush
+    if royalFlush(botCanUse):
         return 1
-    elif s1.issubset(oppCanUse) or s2.issubset(oppCanUse) or s3.issubset(oppCanUse) or s4.issubset(oppCanUse):
+    if royalFlush(oppCanUse):
         return -1
     
-    # straight flush - 5 cards in a row and SAME SUIT but NOT 10 - A
-    maxBot, maxOpp = 0, 0
-    streakBot, streakOpp = 0, 0
-    for i in range(1, 14):
-        if i in botCanUse:
-            streakBot += 1
-            maxBot = max(maxBot, streakBot)
-        else:
-            streakBot = 0
-        
-        if i in oppCanUse:
-            streakOpp += 1
-            maxOpp = max(maxOpp, streakOpp)
-        else:
-            streakOpp = 0
-
-    # check potential win/loss
-    if maxBot == 5:
+    # check for straight flush - 5 cards in a row and SAME SUIT but NOT 10 - A
+    if straightFlush(botCanUse):
         return 1
-    if maxOpp == 5:
+    if straightFlush(oppCanUse):
         return -1
     
+    # four of a kind - four cards of the same rank + 1 random other card (ex. 9 9 9 9 and K) don't have to be in same suit
+    if fourOfAKind(botCanUse):
+        return 1
+    if fourOfAKind(botCanUse):
+        return -1
 
+    # full house - 3 cards of one rank and 2 of another rank ex. 8 8 8 6 6
+    if fullHouse(botCanUse):
+        return 1
+    if fullHouse(botCanUse):
+        return -1
+    
     # [1 - 13] heart
     # [14 - 26] spade
     # [27 - 39] clover
     # [40 - 52] diamond
-    # TODO later
     return 1
 
     # calculate best cards for bot
     """
-    - Four of a kind:
-        - four cards of the same rank + 1 random other card (ex. 9 9 9 9 and K) don't have to be in same suit
-    - full house:
-        - 3 cards of one rank and 2 of another rank
-            - ex. 8 8 8 6 6
     - flush:
         - any five cards of SAME SUIT, not in sequence
             - ex. 2 4 6 10 9 of all hearts
@@ -144,19 +217,13 @@ def WinOrLose(community_cards, cards, opponentCards):
 # gets list of cards ls_cards
 def MonteCarloTreeSearch(root):
     totalWins = 0
-    totalSimulations = 1
+    totalSimulations = 0
     
     # continue only for 10 seconds maximum
     start_time = time.time()
     while time.time() - start_time < 10:
-        print("ROOT: ", root.community_cards)
         # select and expand the node
         node = SelectAndExpand(root)
-        print(node.round, node.unusedCards, node.community_cards, "Picked node")
-
-        # if we run out of unused cards, break
-        if len(node.unusedCards) < 5 - len(node.community_cards) + 2:
-            break
 
         # simulation
         res = simulateFrom(node)
@@ -164,10 +231,9 @@ def MonteCarloTreeSearch(root):
         if res == 1:
             totalWins += 1
 
-        print(res, "result")
-
+        # is backpropagation necessary since we're not using ucb1?
         # backpropagation
-        while node != None:
+        """while node != None:
             node.visits += 1
 
             if res == 1:
@@ -176,7 +242,7 @@ def MonteCarloTreeSearch(root):
             else:
                 node.losses += 1
 
-            node = node.parent
+            node = node.parent"""
 
         # increment number of simulations
         totalSimulations += 1
