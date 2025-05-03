@@ -1,1 +1,3 @@
-# asgn2-480
+# Assignment 2 - 480
+
+## Sophia Chang
