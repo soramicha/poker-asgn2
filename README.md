@@ -1,3 +1,3 @@
-# Assignment 2 - 480
+# Assignment 2 Poker - 480
 
 ## Sophia Chang
